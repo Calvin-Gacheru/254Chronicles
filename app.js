@@ -1506,16 +1506,18 @@ function promptImposterReveal() {
     startImposterRound();
     return;
   }
-  document.getElementById('im-handoff-state').classList.remove('hidden');
-  document.getElementById('im-view-state').classList.add('hidden');
+  document.getElementById('im-flip-inner').classList.remove('flipped');
   document.getElementById('im-reveal-name').textContent = im.revealQueue[im.currentRevealIdx].name;
 }
 
 function revealImposterCard() {
   playClick();
-  document.getElementById('im-handoff-state').classList.add('hidden');
-  document.getElementById('im-view-state').classList.remove('hidden');
   
+  // Anti-double-tap: Disable the "Seen It" button while the card is flipping
+  const seenBtn = document.getElementById('im-seen-btn');
+  seenBtn.disabled = true;
+  setTimeout(() => { seenBtn.disabled = false; }, 600);
+
   const player = im.revealQueue[im.currentRevealIdx];
   const roleText = document.getElementById('im-role-text');
   
@@ -1526,10 +1528,22 @@ function revealImposterCard() {
     roleText.textContent = im.secretWord;
     roleText.style.color = "var(--neon-green)";
   }
+
+  document.getElementById('im-flip-inner').classList.add('flipped');
 }
 
 function nextImposterReveal() {
   playClick();
+  
+  // Erase the word instantly before the flip animation even starts
+  document.getElementById('im-role-text').textContent = "🔒 HIDDEN"; 
+  document.getElementById('im-role-text').style.color = "var(--neon-purple)";
+
+  // Anti-double-tap: Disable the "Reveal" button while the card is flipping back
+  const revealBtn = document.getElementById('im-reveal-btn');
+  revealBtn.disabled = true;
+  setTimeout(() => { revealBtn.disabled = false; }, 600);
+  
   im.currentRevealIdx++;
   promptImposterReveal();
 }
@@ -1598,7 +1612,7 @@ function eliminateImposterPlayer(idx) {
   if (aliveImps === 0) {
     return endImposterGame('Civilians Win! All Imposters caught.');
   }
-  if (aliveImps > aliveCivs) {
+  if (aliveImps >= aliveCivs) {
     return endImposterGame('Imposters Win! They outnumber the civilians.');
   }
   

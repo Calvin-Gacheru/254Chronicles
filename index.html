@@ -632,20 +632,22 @@
 
   <!-- =================== IMPOSTER REVEAL OVERLAY =================== -->
   <div class="round-overlay hidden" id="imposter-reveal-overlay" style="z-index: 700;">
-    <div class="overlay-inner" style="border-color: var(--neon-purple); box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 40px rgba(176, 38, 255, 0.15);">
+    <div class="overlay-inner flip-card-inner" id="im-flip-inner">
       
-      <div id="im-handoff-state">
+      <!-- FRONT: Handoff State -->
+      <div class="flip-card-front">
         <div class="overlay-handover-icon">📱</div>
         <div class="overlay-handover-text">Pass the phone to</div>
         <div class="overlay-handover-name" id="im-reveal-name" style="color: var(--neon-purple); text-shadow: 0 0 10px rgba(176,38,255,0.4);">Player</div>
-        <button class="overlay-handover-btn" onclick="revealImposterCard()" style="background: linear-gradient(135deg, var(--neon-purple), #d400ff);">TAP TO REVEAL 🙈</button>
+        <button id="im-reveal-btn" class="overlay-handover-btn" onclick="revealImposterCard()" style="background: linear-gradient(135deg, var(--neon-purple), #d400ff); width: 100%; margin-top: 1.5rem;">TAP TO REVEAL 🙈</button>
       </div>
 
-      <div id="im-view-state" class="hidden">
+      <!-- BACK: View State -->
+      <div class="flip-card-back">
         <div class="overlay-badge" style="color: var(--neon-purple); border-color: var(--neon-purple); background: rgba(176,38,255,0.1);">SECRET ROLE</div>
         <div class="overlay-next-team-name" id="im-role-text" style="font-size: 2rem; margin: 1.5rem 0;">Guitar</div>
         <div class="overlay-meta">Keep this secret! Memorize it.</div>
-        <button class="overlay-start-btn" onclick="nextImposterReveal()" style="background: linear-gradient(135deg, var(--neon-purple), #d400ff);">I'VE SEEN IT</button>
+        <button id="im-seen-btn" class="overlay-start-btn" onclick="nextImposterReveal()" style="background: linear-gradient(135deg, var(--neon-purple), #d400ff); width: 100%; margin-top: 1.5rem;">I'VE SEEN IT</button>
       </div>
 
     </div>
