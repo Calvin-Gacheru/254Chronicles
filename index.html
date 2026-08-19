@@ -276,6 +276,19 @@
             <button class="card-play-btn">▶ PLAY NOW</button>
           </div>
         </div>
+
+        <div class="game-card" data-game="imposter" onclick="goToSetup('imposter')">
+          <div class="card-art">
+            <div class="card-icon">🕵️</div>
+            <span class="card-badge" style="background: var(--neon-purple); color: #fff;">NEW</span>
+          </div>
+          <div class="card-body">
+            <div class="card-label" style="color: var(--neon-purple);">Social Deduction</div>
+            <div class="card-title">Imposter</div>
+            <p class="card-desc">Blend in or get caught! Give vague clues about the secret word to flush out the Imposter.</p>
+            <button class="card-play-btn" style="background: var(--neon-purple); color: #fff;">▶ PLAY NOW</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -417,6 +430,11 @@
             <span class="cat-name">General Knowledge</span>
             <span class="cat-sub">Mix of everything Kenyan</span>
           </button>
+          <button class="cat-btn" onclick="selectCategory('biblical')" id="cat-biblical">
+            <span class="cat-icon">📖</span>
+            <span class="cat-name">Biblical</span>
+            <span class="cat-sub">Bible characters</span>
+          </button>
         </div>
       </div>
 
@@ -539,6 +557,97 @@
 
       <div class="flag-options" id="fl-options"></div>
       <div class="streak-display" id="fl-streak"></div>
+    </div>
+  </div>
+
+  <!-- =================== IMPOSTER=================== -->>
+  <div id="screen-imposter-setup" class="screen">
+    <div class="setup-screen">
+      <button class="setup-back" onclick="showScreen('landing')"><i class="fas fa-arrow-left"></i> BACK</button>
+      <div class="setup-header">
+        <h2 class="setup-title" style="color: var(--neon-purple);">🕵️ Imposter</h2>
+        <p class="setup-sub">Find the liar among you</p>
+      </div>
+
+      <div class="setup-card">
+        <div class="setup-section-label">Players (Min 3)</div>
+        <div class="team-list" id="imposter-players"></div>
+        <button class="add-team-btn" onclick="addTeam('imposter')" style="color: var(--neon-purple); border-color: var(--neon-purple);"><i class="fas fa-plus"></i> Add Player</button>
+      </div>
+
+      <div class="setup-card">
+        <div class="setup-section-label">Number of Imposters</div>
+        <div class="num-controls">
+          <button class="num-btn" onclick="changeNum('imposter-imposters', -1)">−</button>
+          <span class="num-value" id="imposter-imposters" style="color: var(--neon-purple);">1</span>
+          <span class="num-label">imposters</span>
+          <button class="num-btn" onclick="changeNum('imposter-imposters', 1)">+</button>
+        </div>
+      </div>
+
+      <div class="setup-card">
+        <div class="setup-section-label">Max Rounds (Optional)</div>
+        <div class="num-controls">
+          <button class="num-btn" onclick="changeNum('imposter-rounds', -1)">−</button>
+          <span class="num-value" id="imposter-rounds" style="color: var(--neon-purple);">5</span>
+          <span class="num-label">rounds</span>
+          <button class="num-btn" onclick="changeNum('imposter-rounds', 1)">+</button>
+        </div>
+      </div>
+
+      <button class="start-btn" onclick="startImposter()" style="background: linear-gradient(135deg, var(--neon-purple), #d400ff); color: #fff;">🎮 START GAME</button>
+    </div>
+  </div>
+
+  <!-- =================== IMPOSTER GAME =================== -->
+  <div id="screen-imposter-game" class="screen">
+    <div class="game-screen">
+      <div class="game-hud">
+        <div class="hud-box">
+          <div class="hud-label">Round</div>
+          <div class="hud-value" id="im-round" style="color: var(--neon-purple);">1/5</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label">Imposters</div>
+          <div class="hud-value hud-score" id="im-imposters-left" style="color: var(--neon-red);">1</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label">Civilians</div>
+          <div class="hud-value hud-score" id="im-civilians-left" style="color: var(--neon-blue);">3</div>
+        </div>
+      </div>
+
+      <div class="word-card" style="min-height: auto; padding: 1.5rem; border-color: var(--neon-purple);">
+        <h3 style="color: #fff; font-family: 'Orbitron', monospace; margin-bottom: 0.5rem;" id="im-starting-player">Player starts!</h3>
+        <p class="word-hint" style="color: #a0c8d8;">Give your vague clues in clockwise order. Then, vote to eliminate.</p>
+      </div>
+
+      <h3 style="margin: 1.5rem 0 1rem; color: #fff; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px;">Alive Players (Tap to Eliminate)</h3>
+      <div class="team-list" id="im-alive-list"></div>
+
+      <h3 style="margin: 2rem 0 1rem; color: #5a7a8a; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px;">Eliminated</h3>
+      <div class="team-list" id="im-dead-list"></div>
+    </div>
+  </div>
+
+  <!-- =================== IMPOSTER REVEAL OVERLAY =================== -->
+  <div class="round-overlay hidden" id="imposter-reveal-overlay" style="z-index: 700;">
+    <div class="overlay-inner" style="border-color: var(--neon-purple); box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 40px rgba(176, 38, 255, 0.15);">
+      
+      <div id="im-handoff-state">
+        <div class="overlay-handover-icon">📱</div>
+        <div class="overlay-handover-text">Pass the phone to</div>
+        <div class="overlay-handover-name" id="im-reveal-name" style="color: var(--neon-purple); text-shadow: 0 0 10px rgba(176,38,255,0.4);">Player</div>
+        <button class="overlay-handover-btn" onclick="revealImposterCard()" style="background: linear-gradient(135deg, var(--neon-purple), #d400ff);">TAP TO REVEAL 🙈</button>
+      </div>
+
+      <div id="im-view-state" class="hidden">
+        <div class="overlay-badge" style="color: var(--neon-purple); border-color: var(--neon-purple); background: rgba(176,38,255,0.1);">SECRET ROLE</div>
+        <div class="overlay-next-team-name" id="im-role-text" style="font-size: 2rem; margin: 1.5rem 0;">Guitar</div>
+        <div class="overlay-meta">Keep this secret! Memorize it.</div>
+        <button class="overlay-start-btn" onclick="nextImposterReveal()" style="background: linear-gradient(135deg, var(--neon-purple), #d400ff);">I'VE SEEN IT</button>
+      </div>
+
     </div>
   </div>
 

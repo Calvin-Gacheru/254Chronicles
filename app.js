@@ -200,7 +200,8 @@ const TEAM_COLORS = ['#00c8ff','#00ff88','#ffe600','#ff2244','#ff8c00','#cc44ff'
 const gameConfig = {
   chronicles: { teams: [], rounds: 3, time: 60 },
   trivia: { players: [], rounds: 5, time: 30, category: 'general' },
-  flags: { players: [], rounds: 5, time: 15, level: 'easy' }
+  flags: { players: [], rounds: 5, time: 15, level: 'easy' },
+  imposter: { players: [], impostersCount: 1, rounds: 5 }
 };
 
 function initSetup(game) {
@@ -227,6 +228,13 @@ function initSetup(game) {
     renderTeams('flags');
     // FIX: same — silent init
     selectLevel('easy', true);
+  } else if (game === 'imposter') {
+    gameConfig.imposter.players = [
+      { name: 'Player 1', score: 0, isAlive: true, role: '' },
+      { name: 'Player 2', score: 0, isAlive: true, role: '' },
+      { name: 'Player 3', score: 0, isAlive: true, role: '' }
+    ];
+    renderTeams('imposter');
   }
 }
 
@@ -279,7 +287,9 @@ function updateTeamName(game, idx, val) {
 const numLimits = {
   'chronicles-rounds': [1, 10],
   'trivia-rounds': [3, 15],
-  'flags-rounds': [3, 15]
+  'flags-rounds': [3, 15],
+  'imposter-imposters': [1, 5],
+  'imposter-rounds': [1, 15]
 };
 
 function changeNum(id, delta) {
@@ -336,7 +346,7 @@ const CHRONICLES_WORDS = [
 let ch = {
   teams: [], currentTeamIdx: 0, currentRound: 1, totalRounds: 3,
   timeLeft: 60, timer: null, score: 0,
-  queue: [], skipped: [], word: ''
+  queue: [], skipped: [], word: '', gamePool: []
 };
 
 function startChronicles() {
@@ -346,6 +356,10 @@ function startChronicles() {
   ch.timeEach = cfg.time;
   ch.currentTeamIdx = 0;
   ch.currentRound = 1;
+  
+  // Shuffle all words once per game
+  ch.gamePool = [...CHRONICLES_WORDS].sort(() => Math.random() - 0.5);
+  
   showScreen('chronicles-game');
   showGetReadyOverlay();
 }
@@ -440,8 +454,9 @@ function chroniclesStartTurn() {
   clearInterval(ch.timer);
   ch.score = 0;
   ch.timeLeft = ch.timeEach;
-  const shuffled = [...CHRONICLES_WORDS].sort(() => Math.random() - 0.5);
-  ch.queue = shuffled.slice(0, 8);
+  
+  // Draw from the shared pool so teams never repeat words
+  ch.queue = ch.gamePool.splice(0, 8);
   ch.skipped = [];
   ch.word = '';
 
@@ -538,7 +553,8 @@ async function loadTriviaDB() {
       politics: data["Politics & History"],
       music: data["Music & Art"],
       geography: data["Geography"],
-      general: data["General Knowledge"]
+      general: data["General Knowledge"],
+      biblical: data["Biblical"]
     };
   } catch (err) {
     console.error("Failed to load trivia database:", err);
@@ -555,7 +571,7 @@ let tr = {
   players: [], currentPlayerIdx: 0,
   totalRounds: 5, currentQ: 0, timeLeft: 30, timer: null,
   category: 'general', questions: [], score: 0,
-  streak: 0, answered: false
+  streak: 0, answered: false, gamePool: []
 };
 
 function startTrivia() {
@@ -566,10 +582,10 @@ function startTrivia() {
   tr.category = cfg.category;
   tr.currentPlayerIdx = 0;
 
-  // Ensure DB is loaded before starting
   if (!TRIVIA_DB[tr.category]) {
     loadTriviaDB().then(() => {
       if (TRIVIA_DB[tr.category]) {
+        tr.gamePool = [...TRIVIA_DB[tr.category]].sort(() => Math.random() - 0.5);
         showScreen('trivia-game');
         showGenericGetReady({
           playerName: tr.players[0].name,
@@ -583,6 +599,7 @@ function startTrivia() {
     return;
   }
 
+  tr.gamePool = [...TRIVIA_DB[tr.category]].sort(() => Math.random() - 0.5);
   showScreen('trivia-game');
   showGenericGetReady({
     playerName: tr.players[0].name,
@@ -593,12 +610,13 @@ function startTrivia() {
 
 function triviaStartPlayer() {
   clearInterval(tr.timer);
-  const qs = [...TRIVIA_DB[tr.category]].sort(() => Math.random() - 0.5);
-  tr.questions = qs.slice(0, tr.totalRounds);
+  
+  // Pull unique questions from the game pool
+  tr.questions = tr.gamePool.splice(0, tr.totalRounds);
+  
   tr.currentQ = 0;
   tr.score = 0;
   tr.streak = 0;
-  // Initialize total time here
   tr.timeLeft = tr.timeEach;
   updateTriviaLiveScores();
   triviaShowQuestion();
@@ -1019,7 +1037,7 @@ const FLAGS_HARD = [
 let fl = {
   players: [], currentPlayerIdx: 0,
   totalRounds: 5, currentQ: 0, timeLeft: 15, timer: null,
-  level: 'easy', questions: [], score: 0, streak: 0
+  level: 'easy', questions: [], score: 0, streak: 0, gamePool: []
 };
 
 function startFlags() {
@@ -1030,6 +1048,10 @@ function startFlags() {
   fl.level = cfg.level;
   fl.currentPlayerIdx = 0;
 
+  // Determine difficulty and shuffle once per game
+  const pool = fl.level === 'easy' ? FLAGS_EASY : FLAGS_HARD;
+  fl.gamePool = [...pool].sort(() => Math.random() - 0.5);
+
   showScreen('flags-game');
   showGenericGetReady({
     playerName: fl.players[0].name,
@@ -1039,8 +1061,8 @@ function startFlags() {
 }
 
 function flagsStartPlayer() {
-  const pool = fl.level === 'easy' ? FLAGS_EASY : FLAGS_HARD;
-  fl.questions = [...pool].sort(() => Math.random() - 0.5).slice(0, fl.totalRounds);
+  // Draw unique flags from the shared pool
+  fl.questions = fl.gamePool.splice(0, fl.totalRounds);
   fl.currentQ = 0;
   fl.streak = 0;
   flagsShowQuestion();
@@ -1415,4 +1437,180 @@ if ('serviceWorker' in navigator) {
       console.error('Service worker registration failed:', err);
     });
   });
+}
+
+// ============================================================
+// IMPOSTER GAME ENGINE
+// ============================================================
+const IMPOSTER_WORDS = [
+  "Guitar", "Matatu", "Ugali", "Pyramid", "Ocean", "Lion", "Elephant", "Hospital", 
+  "School", "Smartphone", "Bicycle", "Aeroplane", "Pizza", "Coffee", "Bank", "Police",
+  "Football", "Laptop", "Shoes", "Sun", "Moon", "Fire", "Water", "Rain", "Snow", "Piano",
+  "Camera", "Bridge", "Train", "Bus", "Car", "Motorcycle", "Tree", "Flower", "River",
+  "Mountain", "Desert", "Island", "Forest", "Beach", "City", "Village", "Market",
+  "Restaurant", "Hotel", "Library", "Museum", "Theater", "Cinema", "Stadium",
+  "Airport", "Station", "Harbor", "Park", "Zoo", "Aquarium", "Temple", "Church",
+  "Mosque", "Castle", "Palace", "Tower", "Statue", "Monument", "Fountain", "Garden", "Farm", "Factory", "Shop", "Supermarket",
+  "School", "University", "College", "Laboratory", "Clinic", "Pharmacy", "Bakery", "Butcher", "Barber", "Salon", "Spa", "Gym",
+  "Stadium", "Arena", "Theater", "Cinema", "Concert Hall", "Gallery", "Festival",
+  "Parade", "Aquarium", "Library", "Bookstore", "Cafe", "Restaurant", "Bar", "Pub", "Club", "Lounge", "Hotel", "Motel", "Hostel", "Resort",
+  "Beach", "Pool", "Lake", "River", "Waterfall", "Mountain", "Hill", "Valley", "Desert", "Forest", "Jungle", "Savannah",
+  "Island", "Peninsula", "Cape", "Bay", "Gulf", "Ocean", "Sea", "Lagoon", "Reef", "Volcano"
+];
+
+let im = {
+  players: [], secretWord: '', impostersCount: 1, maxRounds: 5, currentRound: 1,
+  revealQueue: [], currentRevealIdx: 0
+};
+
+function startImposter() {
+  const cfg = gameConfig.imposter;
+  const numPlayers = cfg.players.length;
+  
+  // Validation
+  if (numPlayers < 3) return alert("Need at least 3 players.");
+  let impCount = parseInt(document.getElementById('imposter-imposters').textContent);
+  if (impCount >= numPlayers - 1) {
+    impCount = numPlayers - 2;
+    if (impCount < 1) impCount = 1;
+    document.getElementById('imposter-imposters').textContent = impCount;
+    return alert(`Too many imposters! Adjusted to ${impCount}. Press Start again.`);
+  }
+
+  im.maxRounds = cfg.rounds;
+  im.impostersCount = impCount;
+  im.currentRound = 1;
+  im.secretWord = IMPOSTER_WORDS[Math.floor(Math.random() * IMPOSTER_WORDS.length)];
+
+  // Assign roles
+  im.players = cfg.players.map(p => ({ ...p, score: 0, isAlive: true, role: 'Civilian' }));
+  let imposterIndices = [];
+  while (imposterIndices.length < im.impostersCount) {
+    let r = Math.floor(Math.random() * numPlayers);
+    if (!imposterIndices.includes(r)) imposterIndices.push(r);
+  }
+  imposterIndices.forEach(idx => im.players[idx].role = 'Imposter');
+
+  // Randomize reveal order
+  im.revealQueue = [...im.players].sort(() => Math.random() - 0.5);
+  im.currentRevealIdx = 0;
+
+  document.getElementById('imposter-reveal-overlay').classList.remove('hidden');
+  showScreen('imposter-game');
+  promptImposterReveal();
+}
+
+function promptImposterReveal() {
+  if (im.currentRevealIdx >= im.revealQueue.length) {
+    document.getElementById('imposter-reveal-overlay').classList.add('hidden');
+    startImposterRound();
+    return;
+  }
+  document.getElementById('im-handoff-state').classList.remove('hidden');
+  document.getElementById('im-view-state').classList.add('hidden');
+  document.getElementById('im-reveal-name').textContent = im.revealQueue[im.currentRevealIdx].name;
+}
+
+function revealImposterCard() {
+  playClick();
+  document.getElementById('im-handoff-state').classList.add('hidden');
+  document.getElementById('im-view-state').classList.remove('hidden');
+  
+  const player = im.revealQueue[im.currentRevealIdx];
+  const roleText = document.getElementById('im-role-text');
+  
+  if (player.role === 'Imposter') {
+    roleText.textContent = "You are the imposter 😂";
+    roleText.style.color = "var(--neon-red)";
+  } else {
+    roleText.textContent = im.secretWord;
+    roleText.style.color = "var(--neon-green)";
+  }
+}
+
+function nextImposterReveal() {
+  playClick();
+  im.currentRevealIdx++;
+  promptImposterReveal();
+}
+
+function startImposterRound() {
+  document.getElementById('im-round').textContent = `${im.currentRound}/${im.maxRounds}`;
+  
+  const aliveCivs = im.players.filter(p => p.isAlive && p.role === 'Civilian').length;
+  const aliveImps = im.players.filter(p => p.isAlive && p.role === 'Imposter').length;
+  
+  document.getElementById('im-civilians-left').textContent = aliveCivs;
+  document.getElementById('im-imposters-left').textContent = aliveImps;
+
+  const alivePlayers = im.players.filter(p => p.isAlive);
+  const startPlayer = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+  document.getElementById('im-starting-player').textContent = `🗣️ ${startPlayer.name} starts!`;
+
+  renderImposterLists();
+}
+
+function renderImposterLists() {
+  const aliveList = document.getElementById('im-alive-list');
+  const deadList = document.getElementById('im-dead-list');
+  aliveList.innerHTML = '';
+  deadList.innerHTML = '';
+
+  im.players.forEach((p, idx) => {
+    if (p.isAlive) {
+      const btn = document.createElement('button');
+      btn.className = 'elimination-btn';
+      btn.innerHTML = `<span>${p.name}</span> <i class="fas fa-skull"></i>`;
+      btn.onclick = () => eliminateImposterPlayer(idx);
+      aliveList.appendChild(btn);
+    } else {
+      const div = document.createElement('div');
+      div.className = `dead-player ${p.role === 'Imposter' ? 'imp' : 'civ'}`;
+      div.innerHTML = `<span><i class="fas fa-times" style="margin-right:5px"></i> ${p.name}</span> <span>${p.role}</span>`;
+      deadList.appendChild(div);
+    }
+  });
+}
+
+function eliminateImposterPlayer(idx) {
+  const player = im.players[idx];
+  if (!confirm(`Are you sure you want to eliminate ${player.name}?`)) return;
+  
+  player.isAlive = false;
+  
+  if (player.role === 'Imposter') {
+    playCorrect();
+    alert(`${player.name} was an IMPOSTER!`);
+    // Award 1 point to all currently alive civilians
+    im.players.forEach(p => {
+      if (p.isAlive && p.role === 'Civilian') p.score += 1;
+    });
+  } else {
+    playWrong();
+    alert(`${player.name} was a CIVILIAN!`);
+    // 0 points awarded
+  }
+
+  const aliveCivs = im.players.filter(p => p.isAlive && p.role === 'Civilian').length;
+  const aliveImps = im.players.filter(p => p.isAlive && p.role === 'Imposter').length;
+
+  // Win Conditions
+  if (aliveImps === 0) {
+    return endImposterGame('Civilians Win! All Imposters caught.');
+  }
+  if (aliveImps > aliveCivs) {
+    return endImposterGame('Imposters Win! They outnumber the civilians.');
+  }
+  
+  im.currentRound++;
+  if (im.currentRound > im.maxRounds && aliveImps > 0) {
+    return endImposterGame('Imposters Win! They survived all rounds.');
+  }
+
+  startImposterRound();
+}
+
+function endImposterGame(reason) {
+  alert(`GAME OVER: ${reason}\nThe word was: ${im.secretWord}`);
+  showResults(im.players, 'imposter');
 }

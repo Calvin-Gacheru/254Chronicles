@@ -1048,7 +1048,6 @@ body::after {
 .cat-btn .cat-icon { font-size: 1.8rem; }
 .cat-btn .cat-name { font-weight: 900; color: #e0e8f0; font-size: 0.9rem; }
 .cat-btn .cat-sub { font-size: 0.7rem; color: #4a6a7a; }
-.cat-btn.span2 { grid-column: span 2; }
 
 /* Flag Level Picker */
 .level-btns { display: flex; gap: 1rem; width: 100%; max-width: 520px; }
@@ -1442,3 +1441,41 @@ body::after {
   animation: correctFlash 0.6s ease;
   border-color: var(--neon-green) !important;
 }
+
+:root {
+  --neon-purple: #b026ff;
+}
+
+.game-card[data-game="imposter"] { --card-accent: var(--neon-purple); --card-glow: 176,38,255; }
+.game-card[data-game="imposter"] .card-art { background: linear-gradient(135deg, #1a0033 0%, #33004a 100%); }
+
+.elimination-btn {
+  background: rgba(255, 34, 68, 0.1);
+  border: 1px solid rgba(255, 34, 68, 0.3);
+  color: var(--neon-red);
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.elimination-btn:hover { background: rgba(255, 34, 68, 0.2); }
+
+.dead-player {
+  background: rgba(255,255,255,0.05);
+  border: 1px dashed rgba(255,255,255,0.2);
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  color: #7a9aaa;
+  display: flex;
+  justify-content: space-between;
+}
+.dead-player.imp { border-color: var(--neon-red); color: var(--neon-red); }
+.dead-player.civ { border-color: var(--neon-blue); color: var(--neon-blue); }
+
+[data-theme="light"] .game-card[data-game="imposter"] .card-art { background: linear-gradient(135deg, #f3e6ff 0%, #e6ccff 100%); }

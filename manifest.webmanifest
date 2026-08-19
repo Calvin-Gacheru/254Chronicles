@@ -1,7 +1,7 @@
 {
   "name": "Arcade Kenya",
   "short_name": "ArcadeKE",
-  "description": "Kenyan party arcade with The Chronicles, Trivia Master, and Flag Contest.",
+  "description": "Kenyan party arcade with The Chronicles, Trivia Master, Flag Contest, and imposer games. Play with friends and family, test your knowledge, and have fun!",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
