@@ -198,7 +198,7 @@ function goToSetup(game) {
 // ============================================================
 const TEAM_COLORS = ['#00c8ff','#00ff88','#ffe600','#ff2244','#ff8c00','#cc44fftrivia'];
 const gameConfig = {
-  chronicles: { teams: [], rounds: 3, time: 60 },
+  chronicles: { teams: [], rounds: 3, time: 30, wordsPerTurn: 10 },
   trivia: { players: [], rounds: 5, time: 30, category: 'general' },
   flags: { players: [], rounds: 5, time: 15, level: 'easy' },
   imposter: { players: [], impostersCount: 1, rounds: 5 }
@@ -286,6 +286,7 @@ function updateTeamName(game, idx, val) {
 
 const numLimits = {
   'chronicles-rounds': [1, 10],
+  'chronicles-words': [1, 20],
   'trivia-rounds': [3, 15],
   'flags-rounds': [3, 15],
   'imposter-imposters': [1, 5],
@@ -345,8 +346,8 @@ const CHRONICLES_WORDS = [
 
 let ch = {
   teams: [], currentTeamIdx: 0, currentRound: 1, totalRounds: 3,
-  timeLeft: 60, timer: null, score: 0,
-  queue: [], skipped: [], word: '', gamePool: []
+  timeLeft: 30, timer: null, score: 0,
+  currentWords: [], gamePool: []
 };
 
 function startChronicles() {
@@ -354,10 +355,10 @@ function startChronicles() {
   ch.teams = cfg.teams.map(t => ({ ...t, score: 0, rounds: 0 }));
   ch.totalRounds = cfg.rounds;
   ch.timeEach = cfg.time;
+  ch.wordsPerTurn = cfg.wordsPerTurn || 10;
   ch.currentTeamIdx = 0;
   ch.currentRound = 1;
   
-  // Shuffle all words once per game
   ch.gamePool = [...CHRONICLES_WORDS].sort(() => Math.random() - 0.5);
   
   showScreen('chronicles-game');
@@ -455,10 +456,8 @@ function chroniclesStartTurn() {
   ch.score = 0;
   ch.timeLeft = ch.timeEach;
   
-  // Draw from the shared pool so teams never repeat words
-  ch.queue = ch.gamePool.splice(0, 8);
-  ch.skipped = [];
-  ch.word = '';
+  const rawWords = ch.gamePool.splice(0, ch.wordsPerTurn);
+  ch.currentWords = rawWords.map(w => ({ word: w, guessed: false }));
 
   const team = ch.teams[ch.currentTeamIdx];
   document.getElementById('ch-team-name').textContent = team.name;
@@ -467,8 +466,29 @@ function chroniclesStartTurn() {
   document.getElementById('ch-timer').textContent = ch.timeLeft;
   document.getElementById('ch-timer').classList.remove('warning');
 
-  chroniclesNextWord();
+  renderChroniclesWords();
   ch.timer = setInterval(chroniclesTick, 1000);
+}
+
+function renderChroniclesWords() {
+  const container = document.getElementById('ch-words-container');
+  container.innerHTML = '';
+  
+  ch.currentWords.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = `ch-word-item ${item.guessed ? 'guessed' : ''}`;
+    div.textContent = item.word;
+    div.onclick = () => toggleChroniclesWord(idx);
+    container.appendChild(div);
+  });
+}
+
+function toggleChroniclesWord(idx) {
+  playClick();
+  ch.currentWords[idx].guessed = !ch.currentWords[idx].guessed;
+  ch.score = ch.currentWords.filter(w => w.guessed).length;
+  document.getElementById('ch-score').textContent = ch.score;
+  renderChroniclesWords();
 }
 
 function chroniclesNextWord() {
@@ -498,15 +518,49 @@ function chroniclesTick() {
   ch.timeLeft--;
   const el = document.getElementById('ch-timer');
   el.textContent = ch.timeLeft;
-  if (ch.timeLeft <= 10 && ch.timeLeft > 0) {
+  
+  if (ch.timeLeft <= 5 && ch.timeLeft > 0) {
     el.classList.add('warning');
-    playTick();
+    playAlarm();
   }
+  
   if (ch.timeLeft <= 0) {
     clearInterval(ch.timer);
-    playAlarm();
-    chroniclesEndTurn('timeout');
+    showChroniclesReview();
   }
+}
+
+function showChroniclesReview() {
+  const overlay = document.getElementById('chronicles-review-overlay');
+  const list = document.getElementById('ch-review-list');
+  list.innerHTML = '';
+  
+  ch.currentWords.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = `ch-review-item ${item.guessed ? 'guessed' : ''}`;
+    div.innerHTML = `<span>${item.word}</span> <span>${item.guessed ? '✓' : '✗'}</span>`;
+    
+    div.onclick = () => {
+      playClick();
+      ch.currentWords[idx].guessed = !ch.currentWords[idx].guessed;
+      div.className = `ch-review-item ${ch.currentWords[idx].guessed ? 'guessed' : ''}`;
+      div.innerHTML = `<span>${item.word}</span> <span>${ch.currentWords[idx].guessed ? '✓' : '✗'}</span>`;
+    };
+    
+    list.appendChild(div);
+  });
+  
+  overlay.classList.remove('hidden');
+}
+
+function confirmChroniclesReview() {
+  document.getElementById('chronicles-review-overlay').classList.add('hidden');
+  
+  const finalScore = ch.currentWords.filter(w => w.guessed).length;
+  ch.score = finalScore;
+  ch.teams[ch.currentTeamIdx].score += finalScore;
+  
+  showEndTurnOverlay('timeout');
 }
 
 function chroniclesCorrect() {

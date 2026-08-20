@@ -1533,3 +1533,60 @@ body::after {
 #im-seen-btn:disabled {
   pointer-events: none;
 }
+
+.chronicles-words-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.ch-word-item {
+  background: var(--card-bg);
+  border: 1px solid rgba(0,200,255,0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  font-family: 'Orbitron', monospace;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+}
+
+.ch-word-item.guessed {
+  background: rgba(0,255,136,0.1);
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.ch-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 50vh;
+  overflow-y: auto;
+  text-align: left;
+  margin: 1rem 0;
+}
+
+.ch-review-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+}
+
+.ch-review-item.guessed {
+  background: rgba(0,255,136,0.15);
+  border-color: var(--neon-green);
+}
