@@ -196,7 +196,7 @@ function goToSetup(game) {
 // ============================================================
 // TEAM/PLAYER CONFIG
 // ============================================================
-const TEAM_COLORS = ['#00c8ff','#00ff88','#ffe600','#ff2244','#ff8c00','#cc44ff'];
+const TEAM_COLORS = ['#00c8ff','#00ff88','#ffe600','#ff2244','#ff8c00','#cc44fftrivia'];
 const gameConfig = {
   chronicles: { teams: [], rounds: 3, time: 60 },
   trivia: { players: [], rounds: 5, time: 30, category: 'general' },
@@ -710,11 +710,14 @@ function triviaAnswer(selected, btn, correct) {
     playCorrect();
     btn.classList.add('correct');
     tr.streak++;
-    const pts = tr.streak >= 3 ? 3 : tr.streak >= 2 ? 2 : 1;
+
+    // Fixed at 1 point, no scaling
+    const pts = 1;
     tr.score += pts;
     tr.players[tr.currentPlayerIdx].score += pts;
+
     document.getElementById('tr-score').textContent = tr.score;
-    document.getElementById('tr-streak').textContent = tr.streak >= 2 ? `🔥 ${tr.streak} Streak! +${pts} pts` : `✓ Correct! +${pts} pt`;
+    document.getElementById('tr-streak').textContent = tr.streak >= 2 ? `🔥 ${tr.streak} Streak!` : `✓ Correct!`;
     updateTriviaLiveScores();
     confetti({ particleCount: 30, spread: 50, origin: { y: 0.65 }, colors: ['#00ff88','#ffe600'] });
   } else {
@@ -1144,11 +1147,13 @@ function flagsAnswer(selected, btn, correct) {
     btn.classList.add('correct');
     
     fl.streak++;
-    const pts = fl.level === 'hard' ? (fl.streak >= 3 ? 4 : 2) : 1;
+
+    // Fixed at 1 point, no scaling
+    const pts = 1;
     p.score += pts;
     
     document.getElementById('fl-score').textContent = p.score;
-    document.getElementById('fl-streak').textContent = fl.streak >= 2 ? `🔥 ${fl.streak} Streak! +${pts}` : `✓ +${pts}`;
+    document.getElementById('fl-streak').textContent = fl.streak >= 2 ? `🔥 ${fl.streak} Streak!` : `✓ Correct!`;
     confetti({ particleCount: 30, spread: 50, origin: { y: 0.55 }, colors: ['#ffe600','#00c8ff'] });
   } else {
     disableFlagOptions(correct);
@@ -1595,25 +1600,24 @@ function eliminateImposterPlayer(idx) {
   if (player.role === 'Imposter') {
     playCorrect();
     alert(`${player.name} was an IMPOSTER!`);
-    // Award 1 point to all currently alive civilians
-    im.players.forEach(p => {
-      if (p.isAlive && p.role === 'Civilian') p.score += 1;
-    });
   } else {
     playWrong();
     alert(`${player.name} was a CIVILIAN!`);
-    // 0 points awarded
   }
+
+  // Award 1 survival point to everyone still alive
+  im.players.forEach(p => {
+    if (p.isAlive) p.score += 1;
+  });
 
   const aliveCivs = im.players.filter(p => p.isAlive && p.role === 'Civilian').length;
   const aliveImps = im.players.filter(p => p.isAlive && p.role === 'Imposter').length;
 
-  // Win Conditions
   if (aliveImps === 0) {
     return endImposterGame('Civilians Win! All Imposters caught.');
   }
   if (aliveImps >= aliveCivs) {
-    return endImposterGame('Imposters Win! They outnumber the civilians.');
+    return endImposterGame('Imposters Win! They equal or outnumber the civilians.');
   }
   
   im.currentRound++;
