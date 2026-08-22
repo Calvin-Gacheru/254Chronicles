@@ -257,17 +257,36 @@ function renderTeams(game) {
   });
 }
 
+// function addTeam(game) {
+//   playClick();
+//   const isChronicles = game === 'chronicles';
+//   const list = isChronicles ? gameConfig.chronicles.teams : gameConfig[game].players;
+//   const max = isChronicles ? 6 : 8;
+//   const label = isChronicles ? 'Team' : 'Player';
+//   if (list.length >= max) return;
+//   const n = list.length + 1;
+//   list.push({ name: `${label} ${n}`, score: 0, rounds: 0 });
+//   renderTeams(game);
+// }
+
 function addTeam(game) {
   playClick();
   const isChronicles = game === 'chronicles';
   const list = isChronicles ? gameConfig.chronicles.teams : gameConfig[game].players;
-  const max = isChronicles ? 6 : 8;
+  
+  let max = 8;
+  if (game === 'chronicles') max = 6;
+  if (game === 'imposter') max = Infinity;
+  
   const label = isChronicles ? 'Team' : 'Player';
+  
   if (list.length >= max) return;
+  
   const n = list.length + 1;
   list.push({ name: `${label} ${n}`, score: 0, rounds: 0 });
   renderTeams(game);
 }
+
 
 function removeTeam(game, idx) {
   playClick();
